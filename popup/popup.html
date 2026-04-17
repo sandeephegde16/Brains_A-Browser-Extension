@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body class="popup-body">
+  <main class="popup-shell">
+    <header class="hero-card">
+      <div class="hero-brand">
+        <div class="hero-mark-wrap">
+          <img class="hero-mark" src="../icons/icon48.png" alt="Brains icon">
+        </div>
+        <div>
+          <p class="eyebrow">Personal knowledge clipper</p>
+          <h1>Brains</h1>
+        </div>
+      </div>
+      <p class="hero-copy">
+        Save clean markdown to Google Drive with tags and images, then generate wiki pages when you are ready.
+      </p>
+    </header>
+
+    <div class="popup-content">
+      <div id="status-not-configured" class="status warning" style="display:none;">
+        <span>No Drive folder configured.</span>
+        <a href="#" id="open-options">Open Options</a>
+      </div>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="section-label">Current clip</p>
+            <h2>Review before saving</h2>
+          </div>
+        </div>
+
+        <div id="content-area" class="content-area">
+          <div class="field-group">
+            <label for="brain-select">Brain</label>
+            <select id="brain-select">
+              <option value="">Loading…</option>
+            </select>
+            <div id="new-brain-row" class="new-brain-row" style="display:none;">
+              <input type="text" id="new-brain-input" placeholder="Brain name…">
+              <button type="button" id="new-brain-confirm">Add</button>
+              <button type="button" id="new-brain-cancel" class="btn-ghost">&times;</button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="title-input">Title</label>
+            <input type="text" id="title-input" placeholder="Page title...">
+          </div>
+
+          <div class="field-group">
+            <label for="tags-input">Tags</label>
+            <div class="tags-container">
+              <div id="tags-list" class="tags-list"></div>
+              <input type="text" id="tags-input" placeholder="Add tag and press Enter...">
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="preview">Preview</label>
+            <textarea id="preview" readonly rows="5" placeholder="Extracting content..."></textarea>
+          </div>
+
+          <div id="image-info" class="image-info" style="display:none;"></div>
+
+          <div class="action-stack">
+            <button id="clip-btn" class="primary-button" disabled>Save</button>
+            <button id="wiki-btn" class="primary-button" disabled>Generate Wiki</button>
+            <div id="wiki-status" class="wiki-status" style="display:none;"></div>
+          </div>
+        </div>
+      </section>
+
+      <div id="status-area" class="status" style="display:none;">
+        <div class="status-copy">
+          <div id="status-message"></div>
+          <a id="drive-link" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">Open in Drive</a>
+        </div>
+      </div>
+
+      <div id="loading" class="loading-row" style="display:none;">
+        <div class="spinner"></div>
+        <span id="loading-text">Saving...</span>
+      </div>
+    </div>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

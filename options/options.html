@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brains — Options</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body class="options-body">
+  <main class="options-shell">
+    <header class="hero-card settings-hero">
+      <div class="hero-brand">
+        <div class="hero-mark-wrap">
+          <img class="hero-mark" src="../icons/icon48.png" alt="Brains icon">
+        </div>
+        <div>
+          <p class="eyebrow">Setup</p>
+          <h1>Brains Options</h1>
+        </div>
+      </div>
+      <p class="hero-copy">
+        Configure your brains, set default tags, and add your Gemini key for wiki generation.
+      </p>
+    </header>
+
+    <!-- Brains management -->
+    <section class="settings-card">
+      <div class="card-heading">
+        <p class="section-label">Brain Storage</p>
+        <h2>Your Brains</h2>
+        <p class="section-copy">
+          Each brain is a folder in your Drive. Clips are stored in its
+          <code>raw/</code> subfolder. Connect once and everything is created automatically.
+        </p>
+      </div>
+
+      <div class="field" id="brains-field">
+        <!-- Shown before Drive is connected -->
+        <div id="connect-section">
+          <button type="button" id="connect-btn">Connect to Drive</button>
+          <p class="hint" id="connect-hint">
+            Signs in with your Google account and creates a <code>Brains/</code> folder
+            with a default <em>Inbox</em> brain.
+          </p>
+        </div>
+
+        <!-- Shown after Drive is connected -->
+        <div id="brains-section" style="display:none;">
+          <div id="brains-list" class="brains-list"></div>
+          <div class="add-brain-row">
+            <input type="text" id="new-brain-name" placeholder="New brain name…">
+            <button type="button" id="add-brain-btn">Add</button>
+          </div>
+          <p class="hint" id="brains-hint"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Default tags -->
+    <section class="settings-card">
+      <div class="card-heading">
+        <p class="section-label">Defaults</p>
+        <h2>Tags</h2>
+      </div>
+
+      <div class="field">
+        <label for="default-tags">Default Tags</label>
+        <input type="text" id="default-tags" placeholder="web_clip, research">
+        <p class="hint">Comma-separated tags added to every article's frontmatter.</p>
+      </div>
+    </section>
+
+    <!-- Gemini API key -->
+    <section class="settings-card">
+      <div class="card-heading">
+        <p class="section-label">AI</p>
+        <h2>Gemini API Key</h2>
+      </div>
+
+      <div class="field">
+        <label for="gemini-key">Gemini API Key</label>
+        <input type="password" id="gemini-key" placeholder="Paste your key from aistudio.google.com">
+        <p class="hint">Required for wiki generation. Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>.</p>
+      </div>
+    </section>
+
+    <div class="action-row">
+      <button id="save-btn">Save Settings</button>
+    </div>
+
+    <div id="status" style="display:none;"></div>
+  </main>
+
+  <script src="options.js"></script>
+</body>
+</html>
