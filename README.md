@@ -5,6 +5,12 @@ Organize clips by topic. Generate wiki pages from your saved articles using Gemi
 
 ---
 
+## Demo Video
+
+[![Watch the demo](https://img.youtube.com/vi/PtTL40bhAK4/0.jpg)](https://youtu.be/PtTL40bhAK4)
+
+---
+
 ## There are two audiences for this README
 
 - **End users** — install the extension, click one button, done
