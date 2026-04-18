@@ -4,7 +4,10 @@
 
 // Rebuild "Save selection to Brain ▶ BrainName" sub-menu from brainsCache.
 // Called on install, and whenever the brain list changes.
+let rebuildInProgress = false;
 async function rebuildContextMenuBrains() {
+  if (rebuildInProgress) return;
+  rebuildInProgress = true;
   await new Promise(resolve => chrome.contextMenus.removeAll(resolve));
 
   chrome.contextMenus.create({
@@ -34,6 +37,7 @@ async function rebuildContextMenuBrains() {
       contexts: ["selection"]
     });
   }
+  rebuildInProgress = false;
 }
 
 chrome.runtime.onInstalled.addListener(() => rebuildContextMenuBrains());
@@ -180,7 +184,126 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     return true;
   }
+  if (message.action === "startVoice") {
+    (async () => {
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const injectable = tab?.url && !/^(chrome|chrome-extension|about|data):/.test(tab.url);
+
+        if (!injectable) {
+          const captureTab = await chrome.tabs.create({
+            url: chrome.runtime.getURL("voice-capture/capture.html"),
+            active: true
+          });
+          capturePageTabId = captureTab.id;
+          try { sendResponse({ success: true, captureTab: true }); } catch (_) {}
+          return;
+        }
+
+        voiceTabId = tab.id;
+        await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: csVoiceStart });
+        sendResponse({ success: true });
+      } catch (err) {
+        sendResponse({ success: false, error: err.message });
+      }
+    })();
+    return true;
+  }
+  if (message.action === "startVoiceRelay") {
+    // Called by the capture page: find a real website tab, briefly activate it
+    // (so Chrome can show the mic permission bar), inject csVoiceStart, then
+    // switch back to the capture page once recognition starts.
+    (async () => {
+      try {
+        const all = await chrome.tabs.query({});
+        const isInjectable = t => t.url && !/^(chrome|chrome-extension|about|data):/.test(t.url);
+        const relay = all.find(t => t.id !== capturePageTabId && isInjectable(t));
+
+        if (!relay) {
+          sendResponse({ success: false, error: "no-relay-tab" });
+          return;
+        }
+
+        voiceTabId = relay.id;
+        await chrome.tabs.update(relay.id, { active: true });
+        await new Promise(r => setTimeout(r, 250));
+        await chrome.scripting.executeScript({ target: { tabId: relay.id }, func: csVoiceStart });
+        sendResponse({ success: true });
+      } catch (err) {
+        sendResponse({ success: false, error: err.message });
+      }
+    })();
+    return true;
+  }
+  if (message.action === "voiceStarted" && capturePageTabId) {
+    // Content script confirmed mic is live — switch focus back to the capture page.
+    setTimeout(() => {
+      chrome.tabs.update(capturePageTabId, { active: true }).catch(() => {});
+    }, 500);
+  }
+  if (message.action === "stopVoice") {
+    (async () => {
+      if (voiceTabId !== null) {
+        try {
+          await chrome.scripting.executeScript({ target: { tabId: voiceTabId }, func: csVoiceStop });
+        } catch (_) {}
+        voiceTabId = null;
+      }
+      try { sendResponse({ success: true }); } catch (_) {}
+    })();
+    return true;
+  }
 });
+
+// ─── Voice: content-script speech recognition ────────────────────────────────
+// Injected into the active tab. Chrome shows its standard mic permission bar
+// for that website — once per site, then remembered permanently by Chrome.
+let voiceTabId     = null;
+let capturePageTabId = null;
+
+function csVoiceStart() {
+  if (window._brainsRec) { window._brainsRec.stop(); window._brainsRec = null; }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { chrome.runtime.sendMessage({ action: "voiceError", error: "not-supported" }); return; }
+
+  const rec          = new SR();
+  rec.continuous     = true;
+  rec.interimResults = true;
+  rec.lang           = navigator.language || "en-US";
+  window._brainsRec  = rec;
+
+  rec.onstart  = () => chrome.runtime.sendMessage({ action: "voiceStarted" });
+
+  rec.onresult = (event) => {
+    let finalText = "", interim = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) finalText += event.results[i][0].transcript;
+      else                          interim   += event.results[i][0].transcript;
+    }
+    chrome.runtime.sendMessage({ action: "voiceResult", finalText, interim });
+  };
+
+  rec.onerror = (event) => {
+    if (event.error === "no-speech") return;
+    window._brainsRec = null;
+    chrome.runtime.sendMessage({ action: "voiceError", error: event.error });
+  };
+
+  rec.onend = () => {
+    if (window._brainsRec) { try { rec.start(); } catch (_) {} }
+    else chrome.runtime.sendMessage({ action: "voiceStopped" });
+  };
+
+  try { rec.start(); } catch (e) {
+    window._brainsRec = null;
+    chrome.runtime.sendMessage({ action: "voiceError", error: e.message });
+  }
+}
+
+function csVoiceStop() {
+  if (window._brainsRec) { window._brainsRec.stop(); window._brainsRec = null; }
+}
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 const TOKEN_BUFFER_MS = 5 * 60 * 1000;
@@ -422,7 +545,7 @@ async function deleteBrain(brainId) {
 }
 
 // ─── Main clip handler ────────────────────────────────────────────────────────
-async function handleClip({ title, markdown, url, clippedDate, tags = [], imageUrls = [], brainId }) {
+async function handleClip({ title, markdown, url, clippedDate, tags = [], imageUrls = [], brainId, sourceType = "article" }) {
   const settings = await getSettings();
   const { setupComplete } = await chrome.storage.local.get("setupComplete");
 
@@ -488,7 +611,7 @@ async function handleClip({ title, markdown, url, clippedDate, tags = [], imageU
     `title: "${title.replace(/"/g, '\\"')}"`,
     `url: "${url}"`,
     `brain: "${brain.name}"`,
-    `source_type: "article"`,
+    `source_type: "${sourceType}"`,
     `captured_at: "${capturedAt}"`,
     `tags: [${allTags.map(t => `"${t}"`).join(", ")}]`,
     `word_count: ${wordCount}`,

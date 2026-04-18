@@ -6,24 +6,40 @@ const newBrainCancel   = document.getElementById("new-brain-cancel");
 const wikiBtn          = document.getElementById("wiki-btn");
 const wikiStatus       = document.getElementById("wiki-status");
 const titleInput       = document.getElementById("title-input");
-const tagsInput     = document.getElementById("tags-input");
-const tagsList      = document.getElementById("tags-list");
-const preview       = document.getElementById("preview");
-const clipBtn       = document.getElementById("clip-btn");
-const statusArea    = document.getElementById("status-area");
-const statusMessage = document.getElementById("status-message");
-const driveLink     = document.getElementById("drive-link");
-const loading       = document.getElementById("loading");
-const loadingText   = document.getElementById("loading-text");
-const notConfigured = document.getElementById("status-not-configured");
-const openOptions   = document.getElementById("open-options");
-const imageInfo     = document.getElementById("image-info");
+const tagsInput        = document.getElementById("tags-input");
+const tagsList         = document.getElementById("tags-list");
+const preview          = document.getElementById("preview");
+const clipBtn          = document.getElementById("clip-btn");
+const statusArea       = document.getElementById("status-area");
+const statusMessage    = document.getElementById("status-message");
+const driveLink        = document.getElementById("drive-link");
+const loading          = document.getElementById("loading");
+const loadingText      = document.getElementById("loading-text");
+const notConfigured    = document.getElementById("status-not-configured");
+const openOptions      = document.getElementById("open-options");
+const imageInfo        = document.getElementById("image-info");
+
+// ─── Thought mode DOM refs ────────────────────────────────────────────────────
+const tabClip          = document.getElementById("tab-clip");
+const tabThought       = document.getElementById("tab-thought");
+const clipFields       = document.getElementById("clip-fields");
+const thoughtFields    = document.getElementById("thought-fields");
+const thoughtInput     = document.getElementById("thought-input");
+const panelLabel       = document.getElementById("panel-label");
+const titleLabel       = document.getElementById("title-label");
+const micBtn           = document.getElementById("mic-btn");
+const micPulse         = document.getElementById("mic-pulse");
+const micStatus        = document.getElementById("mic-status");
+const interimOverlay   = document.getElementById("interim-overlay");
+const thoughtWordCount = document.getElementById("thought-word-count");
+const draftNotice      = document.getElementById("thought-draft-notice");
 
 let extractedData      = null;
 let userTags           = [];
 let extractionDone     = false;
 let brainsReady        = false; // true once brains are loaded and at least one exists
 let lastBrainValue     = "";   // restored when user cancels new-brain form
+let mode               = "clip"; // "clip" | "thought"
 
 // ─── Tag chip input ───────────────────────────────────────────────────────────
 function renderTags() {
@@ -60,10 +76,12 @@ tagsInput.addEventListener("keydown", (e) => {
   }
 });
 
-// ─── Enable clip button once both brains + extraction are ready ───────────────
+// ─── Enable clip button once prerequisites are ready ─────────────────────────
 function maybeEnableClipBtn() {
-  if (extractionDone && brainsReady) {
-    clipBtn.disabled = false;
+  if (mode === "thought") {
+    clipBtn.disabled = !(brainsReady && thoughtInput.value.trim());
+  } else {
+    clipBtn.disabled = !(extractionDone && brainsReady);
   }
 }
 
@@ -376,6 +394,8 @@ extractFromTab()
 
 // ─── Clip button ──────────────────────────────────────────────────────────────
 clipBtn.addEventListener("click", async () => {
+  if (mode === "thought") { saveThought(); return; }
+
   if (!extractedData) return;
 
   const brainId = brainSelect.value;
@@ -427,6 +447,249 @@ clipBtn.addEventListener("click", async () => {
     }
   );
 });
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+tabClip.addEventListener("click",    () => switchMode("clip"));
+tabThought.addEventListener("click", () => switchMode("thought"));
+
+function switchMode(newMode) {
+  mode = newMode;
+
+  if (mode === "clip") {
+    tabClip.classList.add("tab-active");
+    tabThought.classList.remove("tab-active");
+    clipFields.style.display    = "";
+    thoughtFields.style.display = "none";
+    panelLabel.textContent      = "Current clip";
+    titleLabel.textContent      = "Title";
+    titleInput.placeholder      = "Page title...";
+    titleInput.value            = extractedData?.title || "";
+    stopRecording();
+  } else {
+    tabThought.classList.add("tab-active");
+    tabClip.classList.remove("tab-active");
+    clipFields.style.display    = "none";
+    thoughtFields.style.display = "";
+    panelLabel.textContent      = "New thought";
+    titleLabel.textContent      = "Title (optional)";
+    titleInput.placeholder      = `Thought – ${new Date().toLocaleDateString()}`;
+    titleInput.value            = "";
+    loadThoughtDraft();
+  }
+
+  maybeEnableClipBtn();
+}
+
+// ─── Thought draft persistence ────────────────────────────────────────────────
+const DRAFT_KEY = "thoughtDraft";
+
+function saveThoughtDraft() {
+  const draft = {
+    title:   titleInput.value,
+    text:    thoughtInput.value,
+    brainId: brainSelect.value,
+    tags:    [...userTags],
+    savedAt: new Date().toISOString()
+  };
+  chrome.storage.local.set({ [DRAFT_KEY]: draft });
+}
+
+function clearThoughtDraft() {
+  chrome.storage.local.remove(DRAFT_KEY);
+  draftNotice.style.display = "none";
+}
+
+function loadThoughtDraft() {
+  chrome.storage.local.get(DRAFT_KEY, ({ thoughtDraft }) => {
+    if (!thoughtDraft || !thoughtDraft.text) return;
+
+    const savedTime = new Date(thoughtDraft.savedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    draftNotice.style.display = "flex";
+    draftNotice.innerHTML =
+      `<span>Draft restored from ${savedTime}</span>` +
+      `<button type="button" class="draft-discard" id="draft-discard-btn">Discard</button>`;
+
+    document.getElementById("draft-discard-btn").addEventListener("click", () => {
+      thoughtInput.value = "";
+      titleInput.value   = "";
+      clearThoughtDraft();
+      updateWordCount();
+      maybeEnableClipBtn();
+    });
+
+    thoughtInput.value = thoughtDraft.text;
+    if (thoughtDraft.title) titleInput.value = thoughtDraft.title;
+    updateWordCount();
+    maybeEnableClipBtn();
+  });
+}
+
+// ─── Word count ───────────────────────────────────────────────────────────────
+function updateWordCount() {
+  const words = thoughtInput.value.trim().split(/\s+/).filter(Boolean).length;
+  thoughtWordCount.textContent = words > 0 ? `${words} word${words !== 1 ? "s" : ""}` : "";
+}
+
+thoughtInput.addEventListener("input", () => {
+  updateWordCount();
+  maybeEnableClipBtn();
+  saveThoughtDraft();
+});
+
+// ─── Speech recognition via offscreen document ───────────────────────────────
+// Direct getUserMedia/webkitSpeechRecognition from extension popups is blocked
+// in Chrome MV3. We delegate to an offscreen document (reason: USER_MEDIA)
+// which CAN show the mic permission dialog and run speech recognition.
+
+let isRecording = false;
+
+// Receive broadcast messages from offscreen.js
+chrome.runtime.onMessage.addListener((msg) => {
+  switch (msg.action) {
+    case "voiceStarted":
+      isRecording = true;
+      setMicState("recording", "Listening…");
+      break;
+
+    case "voiceResult":
+      if (msg.finalText) {
+        const sep = thoughtInput.value && !thoughtInput.value.endsWith(" ") ? " " : "";
+        thoughtInput.value += sep + msg.finalText.trim();
+        updateWordCount();
+        saveThoughtDraft();
+        maybeEnableClipBtn();
+        thoughtInput.scrollTop = thoughtInput.scrollHeight;
+      }
+      interimOverlay.textContent = msg.interim || "";
+      break;
+
+    case "voiceError":
+      isRecording = false;
+      interimOverlay.textContent = "";
+      if (msg.error === "not-allowed" || msg.error === "service-not-allowed") {
+        setMicState("error", "Mic access denied");
+        showMicHelp();
+      } else if (msg.error === "not-supported") {
+        setMicState("error", "Speech recognition not supported in this browser");
+      } else if (msg.error === "network") {
+        setMicState("error", "No internet — type your thought instead");
+      } else {
+        setMicState("error", `Mic error: ${msg.error}`);
+      }
+      break;
+
+    case "voiceStopped":
+      isRecording = false;
+      interimOverlay.textContent = "";
+      setMicState("idle", "Tap to record");
+      break;
+
+  }
+});
+
+function startRecording() {
+  const help = document.getElementById("mic-help-notice");
+  if (help) help.style.display = "none";
+  setMicState("idle", "Starting…");
+  chrome.runtime.sendMessage({ action: "startVoice" }, (response) => {
+    if (chrome.runtime.lastError || !response?.success) {
+      setMicState("error", response?.error || "Could not start recording");
+    } else if (response?.captureTab) {
+      // No injectable tab — voice-capture page opened; popup will close momentarily.
+      setMicState("idle", "Voice capture tab opened…");
+    }
+  });
+}
+
+function stopRecording() {
+  isRecording = false;
+  interimOverlay.textContent = "";
+  setMicState("idle", "Tap to record");
+  chrome.runtime.sendMessage({ action: "stopVoice" });
+}
+
+function showMicHelp() {
+  const notice = document.getElementById("mic-help-notice");
+  if (!notice) return;
+  notice.style.display = "block";
+  const isMac = /Mac|iPhone|iPod|iPad/i.test(navigator.platform);
+  notice.innerHTML =
+    `<strong>Check Chrome mic settings:</strong> open <em>chrome://settings/content/microphone</em> and make sure <em>"Sites can ask"</em> is ON and the extension isn't blocked.` +
+    (isMac ? `<br><br><strong>Also check Mac:</strong> System Preferences → Privacy &amp; Security → Microphone → enable Google Chrome.` : "") +
+    `<br><br>Then reload the extension (<em>chrome://extensions</em>) and click the mic again.`;
+}
+
+function setMicState(state, label) {
+  micPulse.style.display = state === "recording" ? "block" : "none";
+  micBtn.classList.toggle("recording",  state === "recording");
+  micBtn.classList.toggle("mic-error",  state === "error");
+  micStatus.textContent = label;
+  micStatus.className   = "mic-status" + (state !== "idle" ? ` ${state}` : "");
+}
+
+micBtn.addEventListener("click", () => {
+  if (isRecording) {
+    stopRecording();
+  } else {
+    startRecording();
+  }
+});
+
+// ─── Save thought ─────────────────────────────────────────────────────────────
+function saveThought() {
+  const content = thoughtInput.value.trim();
+  if (!content) { showError("Please enter a thought first."); return; }
+
+  const brainId = brainSelect.value;
+  if (!brainId || brainId === "__new__") { showError("Please select a brain first."); return; }
+
+  stopRecording();
+
+  const today     = new Date().toISOString().slice(0, 10);
+  const dateLabel = new Date().toLocaleDateString();
+  const title     = titleInput.value.trim() || `Thought – ${dateLabel}`;
+
+  clipBtn.disabled          = true;
+  loading.style.display     = "flex";
+  loadingText.textContent   = "Saving thought…";
+  statusArea.style.display  = "none";
+  driveLink.style.display   = "none";
+
+  chrome.runtime.sendMessage(
+    {
+      action: "clip",
+      data: {
+        title,
+        markdown:    content,
+        url:         "",
+        clippedDate: today,
+        tags:        userTags,
+        imageUrls:   [],
+        brainId,
+        sourceType:  "thought"
+      }
+    },
+    (response) => {
+      loading.style.display = "none";
+
+      if (response?.success) {
+        showSuccess(`Thought saved to ${response.brainName} as ${response.fileName}`);
+        if (response.webViewLink) {
+          driveLink.href         = response.webViewLink;
+          driveLink.style.display = "inline-block";
+        }
+        thoughtInput.value = "";
+        titleInput.value   = "";
+        updateWordCount();
+        clearThoughtDraft();
+        maybeEnableClipBtn();
+      } else {
+        showError(response?.error || "Unknown error");
+        clipBtn.disabled = false;
+      }
+    }
+  );
+}
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 function showSuccess(msg) {

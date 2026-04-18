@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Brains — Microphone Setup</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      background: #f5f1e8;
+      color: #243039;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #fffdf8;
+      border: 1px solid rgba(36,48,57,0.12);
+      border-radius: 22px;
+      padding: 36px 40px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 18px 40px rgba(41,47,54,0.08);
+    }
+    .step-indicator {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #9aa3ac;
+      margin-bottom: 14px;
+    }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+    p  { font-size: 13.5px; line-height: 1.65; color: #66717c; }
+    .arrow {
+      font-size: 28px;
+      margin: 16px 0 8px;
+      animation: bounce 1s ease-in-out infinite alternate;
+    }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid rgba(47,90,79,0.2);
+      border-top-color: #2f5a4f;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin: 16px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .success { color: #2d5448; }
+    .error-text { color: #7b4339; }
+    .note {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(229,238,233,0.7);
+      font-size: 12.5px;
+      color: #456257;
+      line-height: 1.55;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="content">
+      <div class="spinner"></div>
+      <h1>Microphone setup</h1>
+      <p>Starting…</p>
+    </div>
+  </div>
+  <script src="setup.js"></script>
+</body>
+</html>
