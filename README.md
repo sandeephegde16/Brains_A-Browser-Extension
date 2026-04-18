@@ -66,7 +66,7 @@ word_count: 2847
 
 ---
 
-## Gemini API Key (for wiki generation — coming soon)
+## Gemini API Key (for wiki generation)
 
 Paste your key in Options → Gemini API Key field → Save Settings now, so it's ready when the wiki generation feature ships.
 
@@ -193,3 +193,10 @@ Week2_Assignment/
 ├── icons/
 └── PLAN.md                          # Full product plan
 ```
+
+
+
+
+
+
+
