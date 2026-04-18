@@ -133,61 +133,123 @@ Search: `If` → tap it
 
 **Action 6 — (inside If) Save the article**
 
-This action goes inside the **If** block (you'll see an indented area after Action 5).
+After you add the `If` action (Action 5), the editor shows a structure like this:
+
+```
+┌─ If [Shortcut Input] has any value ─┐
+│  ← add actions here (inside If)     │
+├─ Otherwise ─────────────────────────┤
+│  ← add actions here (inside Else)   │
+└─ End If ────────────────────────────┘
+```
+
+Tap the **"+"  Add Action** button that appears **inside the If block** (above the "Otherwise" line).
 
 Search: `Get contents of URL` → tap it
 
-URL (no `?action=brains`):
+**Set the URL field** — type or paste:
 ```
 https://script.google.com/macros/s/YOUR_ID/exec
 ```
+(This is the same base URL as Action 1 but without `?action=brains`)
 
-Tap **Show More**:
-- Method → **POST**
-- Request Body → **JSON**
-- **Add new field** → Text
-  - Key: `url` — Value: tap `{x}` → **Shortcut Input**
-- **Add new field** → Text
-  - Key: `brain` — Value: tap `{x}` → **Chosen Item**
+**Tap "Show More"** — a small grey link at the bottom of the action card. This reveals extra fields.
+
+You'll now see:
+- **Method** — tap it → change from `GET` to **`POST`**
+- **Request Body** — tap it → change from `Form` to **`JSON`**
+
+After selecting JSON, a section called **"JSON Body"** appears with an **"Add new field"** button.
+
+**Add field 1 — the URL to save:**
+1. Tap **Add new field** → choose **Text**
+2. In the **Key** box: type `url`
+3. In the **Value** box: tap it → you'll see a cursor + a small **`{x}`** token button at the right of the keyboard bar
+4. Tap **`{x}`** → a variable picker slides up
+5. Scroll up to find **Shortcut Input** → tap it
+6. The value field now shows a blue pill that says **"Shortcut Input"**
+
+**Add field 2 — which brain:**
+1. Tap **Add new field** again → choose **Text**
+2. **Key**: `brain`
+3. **Value**: tap the field → tap **`{x}`** → scroll to find **Chosen Item** (from Action 4) → tap it
+4. Value field shows a blue pill: **"Chosen Item"**
+
+The finished action card looks like:
+```
+Get contents of "https://...exec"
+  Method: POST
+  Body: JSON
+    url:   [Shortcut Input]
+    brain: [Chosen Item]
+```
 
 ---
 
 **Action 7 — (inside Otherwise) Dictate the thought**
 
-Tap **Otherwise** in the If block → tap **Add Action** inside it.
+Tap the **"+" Add Action** button inside the **Otherwise block** (below the "Otherwise" line, above "End If").
 
 Search: `Dictate text` → tap it
 
-- Language: **Default**
+- Language: **Default** (leave as-is)
+
+No other configuration needed. This opens a microphone overlay when the shortcut runs standalone.
 
 ---
 
 **Action 8 — (inside Otherwise) Save the thought**
 
-Still inside the **Otherwise** block, tap **Add Action**.
+Still inside the **Otherwise block**, tap **Add Action** again (below the Dictate Text card).
 
 Search: `Get contents of URL` → tap it
 
-URL:
+**URL:**
 ```
 https://script.google.com/macros/s/YOUR_ID/exec
 ```
 
-Tap **Show More**:
+Tap **Show More** → same steps as Action 6:
 - Method → **POST**
 - Request Body → **JSON**
-- **Add new field** → Text
-  - Key: `thought` — Value: tap `{x}` → **Dictated Text**
-- **Add new field** → Text
-  - Key: `brain` — Value: tap `{x}` → **Chosen Item**
+
+**Add field 1 — the thought text:**
+1. Tap **Add new field** → **Text**
+2. Key: `thought`
+3. Value: tap field → tap **`{x}`** → find **Dictated Text** (from Action 7) → tap it
+
+**Add field 2 — which brain:**
+1. Tap **Add new field** → **Text**
+2. Key: `brain`
+3. Value: tap field → tap **`{x}`** → find **Chosen Item** (from Action 4) → tap it
 
 ---
 
 **Action 9 — Show confirmation** (after the End If block)
 
+Tap **Add Action** below the **"End If"** line (outside both blocks).
+
 Search: `Show notification` → tap it
 
-- Title: `Saved to Brains ✓`
+- Title: tap the field and type: `Saved to Brains`
+
+---
+
+**What the full shortcut looks like when done:**
+
+```
+[1] Get contents of URL  (GET  .../exec?action=brains)
+[2] Get dictionary from input
+[3] Get dictionary value  key: brains
+[4] Choose from list  "Save to which brain?"
+[5] If [Shortcut Input] has any value
+      [6] Get contents of URL  (POST .../exec  {url, brain})
+    Otherwise
+      [7] Dictate text
+      [8] Get contents of URL  (POST .../exec  {thought, brain})
+    End If
+[9] Show notification  "Saved to Brains"
+```
 
 ---
 
