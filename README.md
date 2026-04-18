@@ -138,27 +138,58 @@ Open Options and select a folder.
 
 ---
 
+## Saving from iPhone (Safari)
+
+Brains works on iPhone via a free Google Apps Script endpoint + an iOS Shortcut that appears in Safari's Share Sheet.
+
+**Flow:** tap Share in Safari → Save to Brains → pick a brain → file saved to Drive in ~3 seconds.
+
+**Setup takes ~15 minutes:**
+
+→ See **[`google-apps-script/SETUP.md`](google-apps-script/SETUP.md)** for the full step-by-step guide.
+
+The guide covers:
+1. Deploying `Code.gs` to Google Apps Script (your free personal endpoint)
+2. Testing with `curl`
+3. **One shortcut does both** — detects if a URL was shared (→ saves article) or launched standalone (→ opens voice dictation → saves thought). Lives in Safari's Share Sheet and on your Home Screen. "Hey Siri, Save to Brains" works too.
+
+> **Limitation:** The server-side fetch can't run JavaScript, so extraction quality is lower than the Chrome extension for JS-heavy sites. Plain article pages work well.
+
+---
+
+## Saving a thought (voice or text)
+
+Switch to the **Thought** tab in the popup to record an idea without being on an article page.
+
+- **Type** directly into the text area
+- **Tap the mic** to dictate — live transcript appears as you speak
+- Thoughts are saved to Drive with `source_type: "thought"` and included in wiki generation
+
+Draft is auto-saved if you close the popup mid-thought.
+
+---
+
 ## Project structure
 
 ```
 Week2_Assignment/
-├── manifest.json               # Extension config — OAuth client ID goes here
+├── manifest.json                    # Extension config — OAuth client ID goes here
 ├── background/
-│   └── background.js           # Drive API, OAuth, clip handler
+│   └── background.js                # Drive API, OAuth, clip + wiki handler
 ├── content/
-│   └── content-script.js       # Article extraction (Readability + Turndown)
+│   └── content-script.js            # Article extraction (Readability + Turndown)
 ├── popup/
 │   ├── popup.html / .js / .css
 ├── options/
 │   ├── options.html / .js / .css
+├── voice-capture/
+│   ├── capture.html / .js           # Voice capture page (fallback for new tab)
+├── google-apps-script/
+│   ├── Code.gs                      # Apps Script endpoint for iPhone saving
+│   └── SETUP.md                     # iPhone setup guide
 ├── lib/
-│   ├── readability.js          # Mozilla Readability (bundled)
-│   └── turndown.js             # HTML-to-Markdown (bundled)
+│   ├── readability.js               # Mozilla Readability (bundled)
+│   └── turndown.js                  # HTML-to-Markdown (bundled)
 ├── icons/
-└── PLAN.md                     # Full product plan
+└── PLAN.md                          # Full product plan
 ```
-
----
-
-## Roadmap
-- [ ] iOS Shortcut + Google Apps Script for saving from iPhone

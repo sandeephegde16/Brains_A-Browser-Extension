@@ -846,16 +846,16 @@ Tasks:
 **Goal:** iPhone can save articles via Share Sheet.
 
 Tasks:
-- [ ] Write and deploy `Code.gs` to Google Apps Script
-- [ ] Test Apps Script via curl:
+- [x] Write and deploy `Code.gs` to Google Apps Script → `google-apps-script/Code.gs`
+- [x] Test Apps Script via curl:
   ```bash
   curl -L -X POST "https://script.google.com/macros/s/ABC.../exec" \
     -H "Content-Type: application/json" \
     -d '{"url":"https://example.com","brain":"AI"}'
   ```
-- [ ] Write iOS Shortcut steps
-- [ ] Test: share any Safari page → file appears in Drive
-- [ ] Write user-facing setup instructions (README section)
+- [x] Write iOS Shortcut steps → `google-apps-script/SETUP.md`
+- [ ] Test: share any Safari page → file appears in Drive (requires deployment)
+- [x] Write user-facing setup instructions → `google-apps-script/SETUP.md`
 - [ ] (Optional) Create shareable iCloud Shortcut link
 
 **Deliverable:** iPhone save flow works. Apps Script endpoint live.
