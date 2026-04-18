@@ -103,6 +103,7 @@ chrome.runtime.sendMessage({ action: "getBrains" }, (response) => {
   appendNewBrainOption();
   lastBrainValue   = brainSelect.value;
   wikiBtn.disabled = false;
+  chrome.storage.local.set({ lastBrainId: brainSelect.value });
 
   brainsReady = true;
   maybeEnableClipBtn();
@@ -140,6 +141,7 @@ brainSelect.addEventListener("change", () => {
     wikiStatus.style.display = "none";
     if (rateLimitTimer) { clearInterval(rateLimitTimer); rateLimitTimer = null; }
     rateLimitRetries = 0;
+    chrome.storage.local.set({ lastBrainId: brainSelect.value });
   }
 });
 
