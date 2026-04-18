@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Brains — Voice Capture</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      background: #f5f1e8;
+      color: #243039;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #fffdf8;
+      border: 1px solid rgba(36,48,57,0.12);
+      border-radius: 22px;
+      padding: 36px 40px;
+      max-width: 540px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 18px 40px rgba(41,47,54,0.08);
+    }
+    .mic-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px;
+      height: 72px;
+      margin-bottom: 18px;
+    }
+    .mic-icon {
+      width: 44px; height: 44px;
+      background: #2f5a4f;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1;
+      position: relative;
+    }
+    .mic-icon svg { width: 22px; height: 22px; fill: #fff; }
+    .mic-pulse {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(47,90,79,0.35);
+      opacity: 0;
+    }
+    .mic-wrap.recording .mic-pulse {
+      animation: ring 1.4s ease-out infinite;
+    }
+    @keyframes ring {
+      0%   { transform: scale(1);    opacity: 0.7; }
+      100% { transform: scale(1.9);  opacity: 0; }
+    }
+    #status {
+      font-size: 15px;
+      font-weight: 600;
+      color: #2f5a4f;
+      margin-bottom: 18px;
+    }
+    #status.error { color: #7b4339; }
+    #transcript-wrap {
+      min-height: 100px;
+      max-height: 220px;
+      overflow-y: auto;
+      background: #f0ece3;
+      border-radius: 12px;
+      padding: 14px 16px;
+      text-align: left;
+      margin-bottom: 16px;
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: #243039;
+    }
+    #interim {
+      color: #9aa3ac;
+      font-style: italic;
+      margin-top: 4px;
+    }
+    #word-count {
+      font-size: 12px;
+      color: #9aa3ac;
+      margin-bottom: 16px;
+    }
+    .brain-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      text-align: left;
+    }
+    .brain-row label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #66717c;
+      white-space: nowrap;
+    }
+    #brain-select {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(36,48,57,0.18);
+      background: #fff;
+      font-size: 13.5px;
+      color: #243039;
+      outline: none;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    button {
+      padding: 10px 28px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button:disabled { opacity: 0.45; cursor: default; }
+    #done-btn   { background: #2f5a4f; color: #fff; flex: 1; }
+    #cancel-btn { background: rgba(36,48,57,0.1); color: #243039; }
+    #save-status {
+      margin-top: 14px;
+      font-size: 13px;
+      display: none;
+    }
+    #save-status.success { color: #2d5448; }
+    #save-status.error   { color: #7b4339; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="mic-wrap" id="mic-wrap">
+      <div class="mic-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+      </div>
+      <div class="mic-pulse"></div>
+    </div>
+    <div id="status">Starting…</div>
+    <div id="transcript-wrap">
+      <div id="transcript"></div>
+      <div id="interim"></div>
+    </div>
+    <div id="word-count"></div>
+    <div class="brain-row">
+      <label for="brain-select">Save to</label>
+      <select id="brain-select"><option value="">Loading brains…</option></select>
+    </div>
+    <div class="buttons">
+      <button id="done-btn" disabled>Save thought</button>
+      <button id="cancel-btn">Cancel</button>
+    </div>
+    <div id="save-status"></div>
+  </div>
+  <script src="capture.js"></script>
+</body>
+</html>

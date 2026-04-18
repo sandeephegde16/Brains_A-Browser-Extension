@@ -31,8 +31,11 @@
       <section class="panel">
         <div class="panel-header">
           <div>
-            <p class="section-label">Current clip</p>
-            <h2>Review before saving</h2>
+            <p class="section-label" id="panel-label">Current clip</p>
+            <div class="tab-row">
+              <button type="button" class="tab-btn tab-active" id="tab-clip">Clip</button>
+              <button type="button" class="tab-btn" id="tab-thought">Thought</button>
+            </div>
           </div>
         </div>
 
@@ -50,7 +53,7 @@
           </div>
 
           <div class="field-group">
-            <label for="title-input">Title</label>
+            <label for="title-input" id="title-label">Title</label>
             <input type="text" id="title-input" placeholder="Page title...">
           </div>
 
@@ -62,12 +65,42 @@
             </div>
           </div>
 
-          <div class="field-group">
-            <label for="preview">Preview</label>
-            <textarea id="preview" readonly rows="5" placeholder="Extracting content..."></textarea>
+          <!-- Clip mode: article preview -->
+          <div id="clip-fields">
+            <div class="field-group">
+              <label for="preview">Preview</label>
+              <textarea id="preview" readonly rows="5" placeholder="Extracting content..."></textarea>
+            </div>
+            <div id="image-info" class="image-info" style="display:none;"></div>
           </div>
 
-          <div id="image-info" class="image-info" style="display:none;"></div>
+          <!-- Thought mode: voice/text input -->
+          <div id="thought-fields" style="display:none;">
+            <div class="field-group">
+              <div class="thought-header">
+                <label for="thought-input">Thought</label>
+                <span id="thought-word-count" class="word-count"></span>
+              </div>
+              <div class="thought-input-wrap">
+                <textarea id="thought-input" rows="6" placeholder="Speak or type your thought…"></textarea>
+                <div id="interim-overlay" class="interim-overlay" aria-hidden="true"></div>
+              </div>
+              <div id="mic-help-notice" class="mic-help-notice" style="display:none;"></div>
+              <div class="mic-row">
+                <button type="button" id="mic-btn" class="mic-btn" title="Start recording">
+                  <svg id="mic-icon" class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="2" width="6" height="12" rx="3"/>
+                    <path d="M5 10a7 7 0 0 0 14 0"/>
+                    <line x1="12" y1="19" x2="12" y2="22"/>
+                    <line x1="8"  y1="22" x2="16" y2="22"/>
+                  </svg>
+                  <span id="mic-pulse" class="mic-pulse" style="display:none;"></span>
+                </button>
+                <span id="mic-status" class="mic-status">Tap to record</span>
+              </div>
+            </div>
+            <div id="thought-draft-notice" class="draft-notice" style="display:none;"></div>
+          </div>
 
           <div class="action-stack">
             <button id="clip-btn" class="primary-button" disabled>Save</button>

@@ -161,5 +161,4 @@ Week2_Assignment/
 ---
 
 ## Roadmap
-- [ ] Brain management in Options (create, rename, delete)
 - [ ] iOS Shortcut + Google Apps Script for saving from iPhone
